@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% block title %}首页{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- 每日名言 -->
+<div class="quote-of-the-day">
+    <span class="quote-icon">💬</span>
+    <blockquote>{{ quote_of_the_day }}</blockquote>
+</div>
+
+<!-- 欢迎区域 -->
+<div class="welcome-section">
+    <div class="welcome-card">
+        <div class="welcome-text">
+            <h1>下午好，{{ current_user.username }} 💗</h1>
+            <p class="welcome-date">{{ today.year }} 年 {{ today.month }} 月 {{ today.day }} 日</p>
+        </div>
+        <div class="welcome-stats">
+            <div class="stat-badge">
+                <span class="stat-icon">⭐</span>
+                <div>
+                    <span class="stat-value">{{ current_user.total_points }}</span>
+                    <span class="stat-label">总积分</span>
+                </div>
+            </div>
+            <div class="stat-badge">
+                <span class="stat-icon">🔥</span>
+                <div>
+                    <span class="stat-value">{{ streak }}</span>
+                    <span class="stat-label">连续打卡</span>
+                </div>
+            </div>
+            <div class="stat-badge">
+                <span class="stat-icon">📅</span>
+                <div>
+                    <span class="stat-value">{{ week_records }}</span>
+                    <span class="stat-label">本周打卡</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 今日打卡状态 -->
+<div class="today-status">
+    {% if today_record %}
+    <div class="status-card status-done">
+        <span class="status-icon">✅</span>
+        <div>
+            <strong>今日已打卡</strong>
+            <span class="status-points">获得 {{ today_record.total_points }} 积分</span>
+        </div>
+        <a href="{{ url_for('checkin') }}" class="btn btn-sm btn-outline">查看详情</a>
+    </div>
+    {% else %}
+    <div class="status-card status-pending">
+        <span class="status-icon">⏰</span>
+        <div>
+            <strong>今天还没有打卡</strong>
+            <span class="status-points">记录你的饮食、睡眠、心情和运动吧</span>
+        </div>
+        <a href="{{ url_for('checkin') }}" class="btn btn-sm btn-primary">去打卡</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 四大方面健康建议 -->
+<h2 class="section-title">💡 今日健康建议</h2>
+<div class="advice-grid">
+    <!-- 饮食 -->
+    <div class="advice-card advice-diet">
+        <div class="advice-header">
+            <span class="advice-icon">🥗</span>
+            <h3>饮食建议</h3>
+        </div>
+        <div class="advice-body">
+            <p class="advice-principle"><strong>核心原则：</strong>抗炎饮食，减少雌激素刺激</p>
+            <div class="advice-list">
+                <div class="advice-recommend">
+                    <span class="advice-label">✅ 推荐吃</span>
+                    <ul>
+                        <li><strong>深色蔬菜</strong> — 西兰花、菠菜、羽衣甘蓝（帮助肝脏代谢雌激素）</li>
+                        <li><strong>浆果类</strong> — 蓝莓、草莓、树莓（富含抗氧化剂）</li>
+                        <li><strong>健康脂肪</strong> — 牛油果、橄榄油、坚果、深海鱼（三文鱼/鲭鱼富含Omega-3）</li>
+                        <li><strong>姜黄+黑胡椒</strong> — 天然抗炎，加入烹饪或冲饮</li>
+                        <li><strong>高纤维食物</strong> — 燕麦、藜麦、豆类（帮助排出多余雌激素）</li>
+                    </ul>
+                </div>
+                <div class="advice-avoid">
+                    <span class="advice-label">❌ 尽量避免</span>
+                    <ul>
+                        <li>红肉和加工肉制品</li>
+                        <li>高糖食物和精制碳水</li>
+                        <li>乳制品（可能加重炎症）</li>
+                        <li>咖啡因和酒精</li>
+                        <li>反式脂肪酸（油炸食品）</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="advice-tip">
+                💡 <strong>今日尝试：</strong>{{ daily_tips.diet }}
+            </div>
+        </div>
+    </div>
+
+    <!-- 睡眠 -->
+    <div class="advice-card advice-sleep">
+        <div class="advice-header">
+            <span class="advice-icon">😴</span>
+            <h3>睡眠建议</h3>
+        </div>
+        <div class="advice-body">
+            <p class="advice-principle"><strong>核心原则：</strong>优质睡眠帮助调节激素平衡和减轻疼痛敏感度</p>
+            <div class="advice-list">
+                <ul>
+                    <li>🌙 <strong>固定作息</strong> — 每天同一时间上床和起床（包括周末）</li>
+                    <li>📱 <strong>睡前1小时远离屏幕</strong> — 蓝光抑制褪黑素分泌</li>
+                    <li>🛁 <strong>睡前放松仪式</strong> — 温水泡脚10分钟、轻柔拉伸、听舒缓音乐</li>
+                    <li>🌡️ <strong>保持卧室凉爽</strong> — 18-22°C 最适宜睡眠</li>
+                    <li>🧘 <strong>腹式呼吸</strong> — 睡前5分钟：鼻子吸气4秒，屏息4秒，嘴巴呼气6秒</li>
+                    <li>☕ <strong>下午2点后避免咖啡因</strong></li>
+                </ul>
+            </div>
+            <div class="advice-tip">
+                💡 <strong>今日尝试：</strong>{{ daily_tips.sleep }}
+            </div>
+        </div>
+    </div>
+
+    <!-- 心情 -->
+    <div class="advice-card advice-mood">
+        <div class="advice-header">
+            <span class="advice-icon">😊</span>
+            <h3>心情建议</h3>
+        </div>
+        <div class="advice-body">
+            <p class="advice-principle"><strong>核心原则：</strong>情绪健康与内分泌系统密切相关，管理压力就是管理症状</p>
+            <div class="advice-list">
+                <ul>
+                    <li>📝 <strong>情绪日记</strong> — 每天花5分钟写下3件感恩的事或当下的感受</li>
+                    <li>🌿 <strong>正念冥想</strong> — 每天10分钟，使用App（如潮汐、Headspace）引导</li>
+                    <li>🤗 <strong>寻求支持</strong> — 与信任的人聊聊你的感受，不要独自承受</li>
+                    <li>🎵 <strong>音乐疗法</strong> — 听舒缓的纯音乐或自然白噪音</li>
+                    <li>🦋 <strong>温柔对待自己</strong> — 允许自己有不舒服的时候，不需要"完美"</li>
+                    <li>📚 <strong>了解你的身体</strong> — 学习巧克力囊肿知识，减少未知带来的焦虑</li>
+                </ul>
+            </div>
+            <div class="advice-tip">
+                💡 <strong>今日尝试：</strong>{{ daily_tips.mood }}
+            </div>
+        </div>
+    </div>
+
+    <!-- 运动 -->
+    <div class="advice-card advice-exercise">
+        <div class="advice-header">
+            <span class="advice-icon">💪</span>
+            <h3>运动建议</h3>
+        </div>
+        <div class="advice-body">
+            <p class="advice-principle"><strong>核心原则：</strong>温和运动改善盆腔血液循环，减轻疼痛，但要避免经期高强度运动</p>
+            <div class="advice-list">
+                <ul>
+                    <li>🧘 <strong>温和瑜伽</strong> — 猫牛式、婴儿式、蝴蝶式等有助于放松盆底肌</li>
+                    <li>🚶 <strong>散步</strong> — 每天30分钟，保持舒适的节奏</li>
+                    <li>🏊 <strong>游泳/水中漫步</strong> — 水的浮力减轻关节压力</li>
+                    <li>🙅 <strong>避免</strong> — 经期剧烈跑跳、高强度HIIT、仰卧起坐</li>
+                    <li>⏱️ <strong>听从身体</strong> — 疼痛时休息，舒适时温和活动</li>
+                </ul>
+            </div>
+
+            <!-- 视频跟练 -->
+            <div class="advice-tip">
+                💡 <strong>今日尝试：</strong>{{ daily_tips.exercise }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 近期打卡趋势 -->
+{% if recent_records %}
+<h2 class="section-title">📊 近期打卡趋势</h2>
+<div class="chart-container">
+    <canvas id="trendChart"></canvas>
+</div>
+{% endif %}
+
+<!-- 奖励进度 -->
+{% if rewards %}
+<h2 class="section-title">🎁 我的奖励目标</h2>
+<div class="rewards-preview">
+    {% for reward in rewards %}
+    <div class="reward-mini-card">
+        <div class="reward-mini-icon">🎯</div>
+        <div class="reward-mini-info">
+            <span class="reward-mini-name">{{ reward.name }}</span>
+            <div class="reward-mini-progress">
+                <div class="progress-bar">
+                    {% set progress = (current_user.total_points / reward.points_required * 100)|round|int %}
+                    {% set progress = progress if progress <= 100 else 100 %}
+                    <div class="progress-fill" style="width: {{ progress }}%"></div>
+                </div>
+                <span class="progress-text">{{ current_user.total_points }}/{{ reward.points_required }}</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+{% if recent_records %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('trendChart').getContext('2d');
+
+    {% set records = recent_records|reverse %}
+    const labels = [{% for r in records %}'{{ r.record_date.strftime("%m/%d") }}'{% if not loop.last %},{% endif %}{% endfor %}];
+    const dietData = [{% for r in records %}{{ r.diet_score }}{% if not loop.last %},{% endif %}{% endfor %}];
+    const sleepData = [{% for r in records %}{{ r.sleep_score }}{% if not loop.last %},{% endif %}{% endfor %}];
+    const moodData = [{% for r in records %}{{ r.mood_score }}{% if not loop.last %},{% endif %}{% endfor %}];
+    const exerciseData = [{% for r in records %}{{ r.exercise_score }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+    new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '饮食',
+                    data: dietData,
+                    borderColor: '#E8917A',
+                    backgroundColor: 'rgba(232, 145, 122, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                },
+                {
+                    label: '睡眠',
+                    data: sleepData,
+                    borderColor: '#7EC8B4',
+                    backgroundColor: 'rgba(126, 200, 180, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                },
+                {
+                    label: '心情',
+                    data: moodData,
+                    borderColor: '#F5D6A8',
+                    backgroundColor: 'rgba(245, 214, 168, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                },
+                {
+                    label: '运动',
+                    data: exerciseData,
+                    borderColor: '#C4A1D4',
+                    backgroundColor: 'rgba(196, 161, 212, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 5,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

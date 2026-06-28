@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}奖励兑换{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🎁 奖励兑换</h1>
+    <p class="page-desc">用积分奖励自己的进步</p>
+</div>
+
+<!-- 积分余额 -->
+<div class="points-balance-card">
+    <div class="points-balance-icon">⭐</div>
+    <div class="points-balance-info">
+        <span class="points-balance-label">当前积分</span>
+        <span class="points-balance-value">{{ current_user.total_points }}</span>
+    </div>
+</div>
+
+<!-- 添加新奖励 -->
+<div class="card">
+    <div class="card-header">
+        <h3>🎯 设置新奖励目标</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST" class="inline-form">
+            <input type="hidden" name="action" value="add">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="reward_name">奖励名称</label>
+                    <input type="text" id="reward_name" name="name"
+                           placeholder="例如：买一束鲜花、一次SPA" required>
+                </div>
+                <div class="form-group">
+                    <label for="points_required">所需积分</label>
+                    <input type="number" id="points_required" name="points_required"
+                           min="1" max="9999" placeholder="例如：50" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">添加奖励</button>
+        </form>
+    </div>
+</div>
+
+<!-- 待兑换奖励 -->
+{% if pending %}
+<h2 class="section-title">🎯 待兑换奖励</h2>
+<div class="rewards-grid">
+    {% for reward in pending %}
+    <div class="reward-card {% if current_user.total_points >= reward.points_required %}reward-achievable{% endif %}">
+        <div class="reward-card-header">
+            <span class="reward-card-icon">🎁</span>
+            <h3>{{ reward.name }}</h3>
+        </div>
+        <div class="reward-card-body">
+            <div class="reward-points-display">
+                <span class="reward-required">{{ reward.points_required }}</span>
+                <span class="reward-points-label">积分</span>
+            </div>
+            <div class="reward-progress">
+                {% set progress = (current_user.total_points / reward.points_required * 100)|round|int %}
+                {% set progress = progress if progress <= 100 else 100 %}
+                <div class="progress-bar large">
+                    <div class="progress-fill" style="width: {{ progress }}%"></div>
+                </div>
+                <div class="reward-progress-text">
+                    <span>{{ current_user.total_points }} / {{ reward.points_required }}</span>
+                    <span>{{ progress }}%</span>
+                </div>
+            </div>
+            {% if current_user.total_points >= reward.points_required %}
+            <form method="POST" class="reward-action-form">
+                <input type="hidden" name="action" value="redeem">
+                <input type="hidden" name="reward_id" value="{{ reward.id }}">
+                <button type="submit" class="btn btn-primary btn-full"
+                        onclick="return confirm('确认兑换「{{ reward.name }}」？')">
+                    🎉 兑换奖励
+                </button>
+            </form>
+            {% else %}
+            <div class="reward-need">
+                还需要 {{ reward.points_required - current_user.total_points }} 积分 💪
+            </div>
+            {% endif %}
+        </div>
+        <div class="reward-card-footer">
+            <form method="POST" style="display:inline;">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="reward_id" value="{{ reward.id }}">
+                <button type="submit" class="btn btn-tiny btn-danger"
+                        onclick="return confirm('确定删除这个奖励？')">删除</button>
+            </form>
+            <span class="reward-created">设置于 {{ reward.created_at.strftime('%m/%d') }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- 已兑换奖励 -->
+{% if achieved %}
+<h2 class="section-title">🏆 已兑换奖励</h2>
+<div class="achieved-list">
+    {% for reward in achieved %}
+    <div class="achieved-item">
+        <span class="achieved-icon">🏆</span>
+        <div class="achieved-info">
+            <span class="achieved-name">{{ reward.name }}</span>
+            <span class="achieved-date">{{ reward.redeemed_at.year }} 年 {{ reward.redeemed_at.month }} 月 {{ reward.redeemed_at.day }} 日</span>
+        </div>
+        <span class="achieved-cost">-{{ reward.points_required }} 积分</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if not pending and not achieved %}
+<div class="empty-state">
+    <div class="empty-icon">🎯</div>
+    <h3>还没有奖励目标</h3>
+    <p>设置一个奖励来激励自己吧！</p>
+    <p class="empty-hint">💡 小建议：从容易达成的目标开始，比如20积分换一杯奶茶</p>
+</div>
+{% endif %}
+
+{% endblock %}

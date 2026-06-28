@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌸 Daily Care - {% block title %}健康管理{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- 导航栏（仅登录后） -->
+    {% if current_user.is_authenticated %}
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('dashboard') }}" class="nav-brand">🌸 Daily Care</a>
+            <button class="nav-toggle" aria-label="切换菜单">☰</button>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('dashboard') }}" class="nav-link">首页</a></li>
+                <li><a href="{{ url_for('checkin') }}" class="nav-link">打卡</a></li>
+                <li><a href="{{ url_for('history') }}" class="nav-link">记录</a></li>
+                <li><a href="{{ url_for('rewards') }}" class="nav-link">奖励</a></li>
+                <li><a href="{{ url_for('logout') }}" class="nav-link nav-link-logout">退出</a></li>
+            </ul>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Flash 消息 -->
+    <div class="flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">
+                <span>{{ message }}</span>
+                <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
+            </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- 主内容 -->
+    <main class="main-container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 页面底部 -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>🌸 Daily Care &mdash; 关爱自己，每一天</p>
+            <p class="footer-disclaimer">
+                ⚕️ 本应用提供的信息仅供参考，不能替代专业医疗建议。
+                请始终咨询你的医生关于健康状况和治疗方案。
+            </p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% block title %}打卡记录{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📊 打卡记录</h1>
+    <p class="page-desc">回顾你的健康之旅</p>
+</div>
+
+<!-- 记录筛选 -->
+<div class="history-controls">
+    <button class="btn btn-sm btn-outline active" data-range="7">近7天</button>
+    <button class="btn btn-sm btn-outline" data-range="30">近30天</button>
+    <button class="btn btn-sm btn-outline" data-range="90">近90天</button>
+</div>
+
+<!-- 趋势图表 -->
+<div class="chart-container" style="margin-bottom: 2rem;">
+    <canvas id="historyChart"></canvas>
+</div>
+
+<!-- 每日记录列表 -->
+{% if records.items %}
+<div class="history-list">
+    {% for r in records.items %}
+    <div class="history-item">
+        <div class="history-date">
+            <span class="history-day">{{ r.record_date.strftime('%d') }}</span>
+            <span class="history-month">{{ r.record_date.strftime('%m/%Y') }}</span>
+        </div>
+        <div class="history-scores">
+            <div class="score-tag score-diet" title="饮食">
+                <span class="score-label">🥗</span>
+                <span class="score-value">{{ r.diet_score }}</span>
+            </div>
+            <div class="score-tag score-sleep" title="睡眠">
+                <span class="score-label">😴</span>
+                <span class="score-value">{{ r.sleep_score }}</span>
+            </div>
+            <div class="score-tag score-mood" title="心情">
+                <span class="score-label">😊</span>
+                <span class="score-value">{{ r.mood_score }}</span>
+            </div>
+            <div class="score-tag score-exercise" title="运动">
+                <span class="score-label">💪</span>
+                <span class="score-value">{{ r.exercise_score }}</span>
+            </div>
+        </div>
+        <div class="history-points">
+            +{{ r.total_points }}
+        </div>
+        <div class="history-notes">
+            {% if r.diet_note or r.sleep_note or r.mood_note or r.exercise_note %}
+            <button class="btn btn-tiny btn-ghost" onclick="toggleNotes(this)">📝</button>
+            <div class="notes-detail" style="display:none;">
+                {% if r.diet_note %}<p><strong>🥗</strong> {{ r.diet_note }}</p>{% endif %}
+                {% if r.sleep_note %}<p><strong>😴</strong> {{ r.sleep_note }}</p>{% endif %}
+                {% if r.mood_note %}<p><strong>😊</strong> {{ r.mood_note }}</p>{% endif %}
+                {% if r.exercise_note %}<p><strong>💪</strong> {{ r.exercise_note }}</p>{% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- 分页 -->
+<div class="pagination">
+    {% if records.has_prev %}
+    <a href="{{ url_for('history', page=records.prev_num) }}" class="btn btn-sm btn-outline">← 上一页</a>
+    {% endif %}
+    <span class="page-info">第 {{ records.page }} / {{ records.pages }} 页</span>
+    {% if records.has_next %}
+    <a href="{{ url_for('history', page=records.next_num) }}" class="btn btn-sm btn-outline">下一页 →</a>
+    {% endif %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">📝</div>
+    <h3>还没有打卡记录</h3>
+    <p>开始你的第一次打卡吧！</p>
+    <a href="{{ url_for('checkin') }}" class="btn btn-primary">去打卡</a>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function toggleNotes(btn) {
+    const detail = btn.parentElement.querySelector('.notes-detail');
+    if (detail) {
+        detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+// 图表范围切换
+document.querySelectorAll('[data-range]').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('[data-range]').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        const days = parseInt(this.dataset.range);
+        fetch(`/api/stats?days=${days}`)
+            .then(r => r.json())
+            .then(data => {
+                updateChart(data);
+            });
+    });
+});
+
+let chart = null;
+
+function updateChart(data) {
+    const ctx = document.getElementById('historyChart').getContext('2d');
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(d => d.date.slice(5)),
+            datasets: [
+                {
+                    label: '饮食',
+                    data: data.map(d => d.diet),
+                    backgroundColor: 'rgba(232, 145, 122, 0.7)',
+                    borderRadius: 3,
+                },
+                {
+                    label: '睡眠',
+                    data: data.map(d => d.sleep),
+                    backgroundColor: 'rgba(126, 200, 180, 0.7)',
+                    borderRadius: 3,
+                },
+                {
+                    label: '心情',
+                    data: data.map(d => d.mood),
+                    backgroundColor: 'rgba(245, 214, 168, 0.7)',
+                    borderRadius: 3,
+                },
+                {
+                    label: '运动',
+                    data: data.map(d => d.exercise),
+                    backgroundColor: 'rgba(196, 161, 212, 0.7)',
+                    borderRadius: 3,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        footer: function(items) {
+                            const i = items[0].dataIndex;
+                            const total = data[i].diet + data[i].sleep + data[i].mood + data[i].exercise;
+                            return '总分: ' + total;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { stacked: true },
+                y: {
+                    stacked: true,
+                    max: 20,
+                    ticks: { stepSize: 5 }
+                }
+            }
+        }
+    });
+}
+
+// 初始加载（7天）
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/stats?days=7')
+        .then(r => r.json())
+        .then(data => updateChart(data));
+});
+</script>
+{% endblock %}

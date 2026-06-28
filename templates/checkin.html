@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}今日打卡{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📝 今日打卡</h1>
+    <p class="page-desc">{{ today.year }} 年 {{ today.month }} 月 {{ today.day }} 日</p>
+</div>
+
+<form method="POST" class="checkin-form" id="checkinForm">
+    <!-- 饮食 -->
+    <div class="checkin-card">
+        <div class="checkin-card-header">
+            <span class="checkin-icon">🥗</span>
+            <div>
+                <h3>饮食评分</h3>
+                <p class="checkin-desc">今天吃了多少抗炎食物？</p>
+            </div>
+        </div>
+        <div class="checkin-body">
+            <div class="score-selector">
+                <label>评分</label>
+                <div class="star-rating" data-field="diet_score">
+                    {% for i in range(5, 0, -1) %}
+                    <input type="radio" name="diet_score" id="diet_{{ i }}"
+                           value="{{ i }}" {% if record and record.diet_score == i %}checked{% endif %}>
+                    <label for="diet_{{ i }}" title="{{ i }}分">⭐</label>
+                    {% endfor %}
+                </div>
+                <div class="score-hints">
+                    <span>1分：没注意饮食</span>
+                    <span>5分：完美抗炎饮食</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="diet_note">今天吃了什么？</label>
+                <textarea id="diet_note" name="diet_note" rows="2"
+                          placeholder="记录今天的饮食情况...">{{ record.diet_note if record else '' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 睡眠 -->
+    <div class="checkin-card">
+        <div class="checkin-card-header">
+            <span class="checkin-icon">😴</span>
+            <div>
+                <h3>睡眠评分</h3>
+                <p class="checkin-desc">昨晚睡得怎么样？</p>
+            </div>
+        </div>
+        <div class="checkin-body">
+            <div class="score-selector">
+                <label>评分</label>
+                <div class="star-rating" data-field="sleep_score">
+                    {% for i in range(5, 0, -1) %}
+                    <input type="radio" name="sleep_score" id="sleep_{{ i }}"
+                           value="{{ i }}" {% if record and record.sleep_score == i %}checked{% endif %}>
+                    <label for="sleep_{{ i }}" title="{{ i }}分">⭐</label>
+                    {% endfor %}
+                </div>
+                <div class="score-hints">
+                    <span>1分：几乎没睡</span>
+                    <span>5分：睡得非常好</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="sleep_note">睡眠备注</label>
+                <textarea id="sleep_note" name="sleep_note" rows="2"
+                          placeholder="记录睡眠情况...">{{ record.sleep_note if record else '' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 心情 -->
+    <div class="checkin-card">
+        <div class="checkin-card-header">
+            <span class="checkin-icon">😊</span>
+            <div>
+                <h3>心情评分</h3>
+                <p class="checkin-desc">今天心情如何？</p>
+            </div>
+        </div>
+        <div class="checkin-body">
+            <div class="score-selector">
+                <label>评分</label>
+                <div class="star-rating" data-field="mood_score">
+                    {% for i in range(5, 0, -1) %}
+                    <input type="radio" name="mood_score" id="mood_{{ i }}"
+                           value="{{ i }}" {% if record and record.mood_score == i %}checked{% endif %}>
+                    <label for="mood_{{ i }}" title="{{ i }}分">⭐</label>
+                    {% endfor %}
+                </div>
+                <div class="score-hints">
+                    <span>1分：心情很差</span>
+                    <span>5分：心情很好</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="mood_note">今天的心情</label>
+                <textarea id="mood_note" name="mood_note" rows="2"
+                          placeholder="记录今天的心情...">{{ record.mood_note if record else '' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 运动 -->
+    <div class="checkin-card">
+        <div class="checkin-card-header">
+            <span class="checkin-icon">💪</span>
+            <div>
+                <h3>运动评分</h3>
+                <p class="checkin-desc">今天运动了吗？</p>
+            </div>
+        </div>
+        <div class="checkin-body">
+            <div class="score-selector">
+                <label>评分</label>
+                <div class="star-rating" data-field="exercise_score">
+                    {% for i in range(5, 0, -1) %}
+                    <input type="radio" name="exercise_score" id="exercise_{{ i }}"
+                           value="{{ i }}" {% if record and record.exercise_score == i %}checked{% endif %}>
+                    <label for="exercise_{{ i }}" title="{{ i }}分">⭐</label>
+                    {% endfor %}
+                </div>
+                <div class="score-hints">
+                    <span>1分：没有运动</span>
+                    <span>5分：完成了全套运动</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="exercise_note">运动记录</label>
+                <textarea id="exercise_note" name="exercise_note" rows="2"
+                          placeholder="记录今天的运动...">{{ record.exercise_note if record else '' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提交 -->
+    <div class="checkin-actions">
+        <div class="points-preview" id="pointsPreview">
+            预计获得: <span class="points-count">0</span> 积分
+        </div>
+        <button type="submit" class="btn btn-primary btn-large">
+            {% if record %}✅ 更新打卡{% else %}🌸 完成打卡{% endif %}
+        </button>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('checkinForm');
+    const pointsSpan = document.querySelector('.points-count');
+
+    function updatePoints() {
+        let total = 0;
+        ['diet', 'sleep', 'mood', 'exercise'].forEach(cat => {
+            const checked = document.querySelector(`input[name="${cat}_score"]:checked`);
+            if (checked) total += parseInt(checked.value);
+        });
+        pointsSpan.textContent = total;
+    }
+
+    // 监听所有评分变化
+    document.querySelectorAll('.star-rating input[type="radio"]').forEach(input => {
+        input.addEventListener('change', updatePoints);
+    });
+
+    // 初始计算
+    updatePoints();
+
+    // 表单提交确认
+    form.addEventListener('submit', function(e) {
+        const hasScore = ['diet', 'sleep', 'mood', 'exercise'].some(cat => {
+            return document.querySelector(`input[name="${cat}_score"]:checked`);
+        });
+        if (!hasScore) {
+            e.preventDefault();
+            alert('请至少为一项评分后再提交');
+        }
+    });
+});
+</script>
+{% endblock %}
