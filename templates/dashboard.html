@@ -181,7 +181,7 @@
 </div>
 
 <!-- 近期打卡趋势 -->
-{% if recent_records %}
+{% if has_trend_data %}
 <h2 class="section-title">📊 近期打卡趋势</h2>
 <div class="chart-container">
     <canvas id="trendChart"></canvas>
@@ -214,54 +214,68 @@
 {% endblock %}
 
 {% block extra_scripts %}
-{% if recent_records %}
+{% if has_trend_data %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const ctx = document.getElementById('trendChart').getContext('2d');
-
-    {% set records = recent_records|reverse %}
-    const labels = [{% for r in records %}'{{ r.record_date.strftime("%m/%d") }}'{% if not loop.last %},{% endif %}{% endfor %}];
-    const dietData = [{% for r in records %}{{ r.diet_score }}{% if not loop.last %},{% endif %}{% endfor %}];
-    const sleepData = [{% for r in records %}{{ r.sleep_score }}{% if not loop.last %},{% endif %}{% endfor %}];
-    const moodData = [{% for r in records %}{{ r.mood_score }}{% if not loop.last %},{% endif %}{% endfor %}];
-    const exerciseData = [{% for r in records %}{{ r.exercise_score }}{% if not loop.last %},{% endif %}{% endfor %}];
+    const isMobile = window.innerWidth < 480;
 
     new Chart(ctx, {
-        type: 'radar',
+        type: 'line',
         data: {
-            labels: labels,
+            labels: {{ trend_labels|tojson }},
             datasets: [
                 {
                     label: '饮食',
-                    data: dietData,
+                    data: {{ trend_diet|tojson }},
                     borderColor: '#E8917A',
-                    backgroundColor: 'rgba(232, 145, 122, 0.1)',
-                    tension: 0.3,
+                    backgroundColor: 'rgba(232, 145, 122, 0.12)',
                     fill: true,
+                    tension: 0.35,
+                    pointRadius: isMobile ? 3 : 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#E8917A',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
                 },
                 {
                     label: '睡眠',
-                    data: sleepData,
+                    data: {{ trend_sleep|tojson }},
                     borderColor: '#7EC8B4',
-                    backgroundColor: 'rgba(126, 200, 180, 0.1)',
-                    tension: 0.3,
+                    backgroundColor: 'rgba(126, 200, 180, 0.12)',
                     fill: true,
+                    tension: 0.35,
+                    pointRadius: isMobile ? 3 : 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#7EC8B4',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
                 },
                 {
                     label: '心情',
-                    data: moodData,
-                    borderColor: '#F5D6A8',
-                    backgroundColor: 'rgba(245, 214, 168, 0.1)',
-                    tension: 0.3,
+                    data: {{ trend_mood|tojson }},
+                    borderColor: '#F0C27A',
+                    backgroundColor: 'rgba(240, 194, 122, 0.12)',
                     fill: true,
+                    tension: 0.35,
+                    pointRadius: isMobile ? 3 : 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#F0C27A',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
                 },
                 {
                     label: '运动',
-                    data: exerciseData,
+                    data: {{ trend_exercise|tojson }},
                     borderColor: '#C4A1D4',
-                    backgroundColor: 'rgba(196, 161, 212, 0.1)',
-                    tension: 0.3,
+                    backgroundColor: 'rgba(196, 161, 212, 0.12)',
                     fill: true,
+                    tension: 0.35,
+                    pointRadius: isMobile ? 3 : 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#C4A1D4',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
                 }
             ]
         },
@@ -269,14 +283,60 @@ document.addEventListener('DOMContentLoaded', function() {
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-                legend: { position: 'bottom' }
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 14,
+                        padding: 14,
+                        usePointStyle: true,
+                        font: { size: 12 }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(255,255,255,0.95)',
+                    titleColor: '#2D3436',
+                    bodyColor: '#636E72',
+                    borderColor: '#F0E6DE',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    padding: 10,
+                    boxPadding: 4,
+                    callbacks: {
+                        label: function(context) {
+                            const labels = ['', '很差', '较差', '一般', '不错', '很好'];
+                            return context.dataset.label + ': ' + labels[context.parsed.y] || context.parsed.y;
+                        }
+                    }
+                }
             },
             scales: {
-                r: {
+                y: {
                     beginAtZero: true,
                     max: 5,
-                    ticks: { stepSize: 1 }
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            const labels = ['', '很差', '较差', '一般', '不错', '很好'];
+                            return labels[value] || value;
+                        },
+                        font: { size: isMobile ? 10 : 11 }
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.06)',
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: isMobile ? 10 : 11 } }
                 }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index',
+            },
+            hover: {
+                mode: 'index',
+                intersect: false,
             }
         }
     });

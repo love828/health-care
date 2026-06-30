@@ -669,10 +669,33 @@ img { max-width: 100%; }
     border-radius: var(--radius-md);
     padding: 1.25rem;
     box-shadow: var(--shadow-sm);
+    position: relative;
 }
 
 .chart-container canvas {
     max-height: 350px;
+    max-width: 100%;
+}
+
+.chart-container::before {
+    content: '鼠标悬停查看详情';
+    display: block;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 480px) {
+    .chart-container {
+        padding: 0.75rem;
+    }
+    .chart-container canvas {
+        max-height: 260px;
+    }
+    .chart-container::before {
+        content: '点击数据点查看详情';
+    }
 }
 
 /* ============================================================

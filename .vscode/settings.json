@@ -1,0 +1,6 @@
+{
+    "python.defaultInterpreterPath": "D:\\python\\python37\\python",
+    "python.terminal.activateEnvironment": false,
+    "python.linting.enabled": false,
+    "python.analysis.typeCheckingMode": "off"
+}

@@ -9,6 +9,7 @@ import os
 import sys
 from datetime import date, datetime, timedelta
 
+
 # Windows 编码兼容：确保 Flask 能输出中文
 if sys.platform == 'win32':
     if hasattr(sys.stdout, 'reconfigure'):
@@ -159,10 +160,31 @@ def dashboard():
     quote_of_the_day = get_quote_of_the_day(today)
     daily_tips = get_daily_tips(today)
 
-    # 最近7天记录
-    recent_records = DailyRecord.query.filter_by(
-        user_id=current_user.id
-    ).order_by(DailyRecord.record_date.desc()).limit(7).all()
+    # 最近7天趋势数据（按日历日填充，缺勤天数补0）
+    days_range = [today - timedelta(days=i) for i in range(6, -1, -1)]
+    existing_records = {
+        r.record_date: r
+        for r in DailyRecord.query.filter(
+            DailyRecord.user_id == current_user.id,
+            DailyRecord.record_date.in_(days_range)
+        ).all()
+    }
+
+    trend_labels = []
+    trend_diet = []
+    trend_sleep = []
+    trend_mood = []
+    trend_exercise = []
+
+    for day in days_range:
+        trend_labels.append(day.strftime("%m/%d"))
+        r = existing_records.get(day)
+        trend_diet.append(r.diet_score if r else 0)
+        trend_sleep.append(r.sleep_score if r else 0)
+        trend_mood.append(r.mood_score if r else 0)
+        trend_exercise.append(r.exercise_score if r else 0)
+
+    has_trend_data = any(trend_diet) or any(trend_sleep) or any(trend_mood) or any(trend_exercise)
 
     # 本周打卡天数
     week_start = today - timedelta(days=today.weekday())
@@ -180,12 +202,17 @@ def dashboard():
         'dashboard.html',
         today=today,
         today_record=today_record,
-        recent_records=recent_records,
         week_records=week_records,
         streak=current_user.streak_days(),
         rewards=rewards,
         quote_of_the_day=quote_of_the_day,
         daily_tips=daily_tips,
+        trend_labels=trend_labels,
+        trend_diet=trend_diet,
+        trend_sleep=trend_sleep,
+        trend_mood=trend_mood,
+        trend_exercise=trend_exercise,
+        has_trend_data=has_trend_data,
     )
 
 
